@@ -1,0 +1,101 @@
+name: CI Pipeline
+'on':
+  push: {}
+  workflow_dispatch: {}
+jobs:
+  test:
+    runs-on:
+    - self-hosted
+    - Linux
+    - X64
+    - production
+    env:
+      CIRCLE_BRANCH: ${{ github.ref_name }}
+      CIRCLE_PROJECT_REPONAME: ${{ github.event.repository.name }}
+      CIRCLE_SHA1: ${{ github.sha }}
+      CIRCLE_WORKFLOW_JOB_ID: ${{ github.job }}-${{ github.run_id }}-${{ github.run_attempt
+        }}
+      ARTIFACTORY_USER_PLATFORM: ${{ secrets.ARTIFACTORY_USER_PLATFORM }}
+      ARTIFACTORY_TOKEN_PLATFORM: ${{ secrets.ARTIFACTORY_TOKEN_PLATFORM }}
+      DOCKERHUB_AUTH_TOKEN: ${{ secrets.DOCKERHUB_AUTH_TOKEN }}
+      SA_RELEASE_BOT_GITHUB_PEM: ${{ secrets.SA_RELEASE_BOT_GITHUB_PEM }}
+    if: github.ref_name != '/' && github.ref_name != '.' && github.ref_name != '*'
+      && github.ref_name != '/'
+    steps:
+    - uses: actions/checkout@v3
+      with:
+        fetch-depth: 0
+        fetch-tags: true
+    - name: Run
+      run: |
+        make generate-test-data
+        make test
+  test-dry-run:
+    runs-on:
+    - self-hosted
+    - Linux
+    - X64
+    - production
+    env:
+      CIRCLE_BRANCH: ${{ github.ref_name }}
+      CIRCLE_PROJECT_REPONAME: ${{ github.event.repository.name }}
+      CIRCLE_SHA1: ${{ github.sha }}
+      CIRCLE_WORKFLOW_JOB_ID: ${{ github.job }}-${{ github.run_id }}-${{ github.run_attempt
+        }}
+    steps:
+    - uses: actions/checkout@v3
+      with:
+        fetch-depth: 0
+        fetch-tags: true
+    - name: Run
+      run: |
+        make generate-test-data
+        make test
+  release:
+    runs-on:
+    - self-hosted
+    - Linux
+    - X64
+    - production
+    env:
+      CIRCLE_BRANCH: ${{ github.ref_name }}
+      CIRCLE_PROJECT_REPONAME: ${{ github.event.repository.name }}
+      CIRCLE_SHA1: ${{ github.sha }}
+      CIRCLE_WORKFLOW_JOB_ID: ${{ github.job }}-${{ github.run_id }}-${{ github.run_attempt
+        }}
+      ARTIFACTORY_USER_PLATFORM: ${{ secrets.ARTIFACTORY_USER_PLATFORM }}
+      ARTIFACTORY_TOKEN_PLATFORM: ${{ secrets.ARTIFACTORY_TOKEN_PLATFORM }}
+      DOCKERHUB_AUTH_TOKEN: ${{ secrets.DOCKERHUB_AUTH_TOKEN }}
+      SA_RELEASE_BOT_GITHUB_PEM: ${{ secrets.SA_RELEASE_BOT_GITHUB_PEM }}
+    needs:
+    - test
+    if: github.ref_name != '/' && github.ref_name != '.' && github.ref_name != '*'
+      && github.ref_name != '/'
+    steps:
+    - uses: actions/checkout@v3
+      with:
+        fetch-depth: 0
+        fetch-tags: true
+    - name: Run
+      run: make build
+  release-dry-run:
+    runs-on:
+    - self-hosted
+    - Linux
+    - X64
+    - production
+    env:
+      CIRCLE_BRANCH: ${{ github.ref_name }}
+      CIRCLE_PROJECT_REPONAME: ${{ github.event.repository.name }}
+      CIRCLE_SHA1: ${{ github.sha }}
+      CIRCLE_WORKFLOW_JOB_ID: ${{ github.job }}-${{ github.run_id }}-${{ github.run_attempt
+        }}
+    needs:
+    - test-dry-run
+    steps:
+    - uses: actions/checkout@v3
+      with:
+        fetch-depth: 0
+        fetch-tags: true
+    - name: Run
+      run: make build
