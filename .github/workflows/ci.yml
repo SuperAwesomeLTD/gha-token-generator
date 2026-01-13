@@ -3,6 +3,15 @@ name: CI Pipeline
   push: {}
   workflow_dispatch: {}
 jobs:
+  cancel:
+    name: Cancel Previous Runs
+    runs-on:
+    - self-hosted
+    - Linux
+    - X64
+    - production
+    steps:
+    - uses: styfle/cancel-workflow-action@0.12.1
   test:
     runs-on:
     - self-hosted
