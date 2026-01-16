@@ -1,6 +1,9 @@
 name: CI Pipeline
 'on':
-  push: {}
+  push:
+    tags:
+    - v[0-9]+.[0-9]+.[0-9]+
+  pull_request: {}
   workflow_dispatch: {}
 jobs:
   cancel:
@@ -28,8 +31,7 @@ jobs:
       ARTIFACTORY_TOKEN_PLATFORM: ${{ secrets.ARTIFACTORY_TOKEN_PLATFORM }}
       DOCKERHUB_AUTH_TOKEN: ${{ secrets.DOCKERHUB_AUTH_TOKEN }}
       SA_RELEASE_BOT_GITHUB_PEM: ${{ secrets.SA_RELEASE_BOT_GITHUB_PEM }}
-    if: github.ref_name != '/' && github.ref_name != '.' && github.ref_name != '*'
-      && github.ref_name != '/'
+    if: startsWith(github.ref, 'refs/tags/v')
     steps:
     - uses: actions/checkout@v3
       with:
@@ -56,6 +58,7 @@ jobs:
       CIRCLE_SHA1: ${{ github.sha }}
       CIRCLE_WORKFLOW_JOB_ID: ${{ github.job }}-${{ github.run_id }}-${{ github.run_attempt
         }}
+    if: '!startsWith(github.ref, ''refs/tags/'')'
     steps:
     - uses: actions/checkout@v3
       with:
@@ -88,8 +91,7 @@ jobs:
       SA_RELEASE_BOT_GITHUB_PEM: ${{ secrets.SA_RELEASE_BOT_GITHUB_PEM }}
     needs:
     - test
-    if: github.ref_name != '/' && github.ref_name != '.' && github.ref_name != '*'
-      && github.ref_name != '/'
+    if: startsWith(github.ref, 'refs/tags/v')
     steps:
     - uses: actions/checkout@v3
       with:
@@ -116,6 +118,7 @@ jobs:
         }}
     needs:
     - test-dry-run
+    if: '!startsWith(github.ref, ''refs/tags/'')'
     steps:
     - uses: actions/checkout@v3
       with:
