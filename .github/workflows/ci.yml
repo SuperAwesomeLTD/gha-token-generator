@@ -1,0 +1,119 @@
+name: CI Pipeline
+'on':
+  push:
+    tags:
+    - v[0-9]+.[0-9]+.[0-9]+
+  pull_request: {}
+  workflow_dispatch: {}
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    env:
+      CIRCLE_BRANCH: ${{ github.ref_name }}
+      CIRCLE_PROJECT_REPONAME: ${{ github.event.repository.name }}
+      CIRCLE_SHA1: ${{ github.sha }}
+      CIRCLE_WORKFLOW_JOB_ID: ${{ github.job }}-${{ github.run_id }}-${{ github.run_attempt
+        }}
+      ARTIFACTORY_USER_PLATFORM: ${{ secrets.ARTIFACTORY_USER_PLATFORM }}
+      ARTIFACTORY_TOKEN_PLATFORM: ${{ secrets.ARTIFACTORY_TOKEN_PLATFORM }}
+      DOCKERHUB_AUTH_TOKEN: ${{ secrets.DOCKERHUB_AUTH_TOKEN }}
+      SA_RELEASE_BOT_GITHUB_PEM: ${{ secrets.SA_RELEASE_BOT_GITHUB_PEM }}
+    if: startsWith(github.ref, 'refs/tags/v')
+    steps:
+    - uses: actions/checkout@v3
+      with:
+        fetch-depth: 0
+        fetch-tags: true
+    - uses: actions/setup-go@v4
+      with:
+        go-version: '1.17'
+    - name: Install build tools
+      run: sudo apt-get update && sudo apt-get install -y build-essential
+    - name: Run
+      run: |
+        make generate-test-data
+        make test
+  test-dry-run:
+    runs-on: ubuntu-latest
+    env:
+      CIRCLE_BRANCH: ${{ github.ref_name }}
+      CIRCLE_PROJECT_REPONAME: ${{ github.event.repository.name }}
+      CIRCLE_SHA1: ${{ github.sha }}
+      CIRCLE_WORKFLOW_JOB_ID: ${{ github.job }}-${{ github.run_id }}-${{ github.run_attempt
+        }}
+    if: '!startsWith(github.ref, ''refs/tags/'')'
+    steps:
+    - uses: actions/checkout@v3
+      with:
+        fetch-depth: 0
+        fetch-tags: true
+    - uses: actions/setup-go@v4
+      with:
+        go-version: '1.17'
+    - name: Install build tools
+      run: sudo apt-get update && sudo apt-get install -y build-essential
+    - name: Run
+      run: |
+        make generate-test-data
+        make test
+  release:
+    runs-on: ubuntu-latest
+    env:
+      CIRCLE_BRANCH: ${{ github.ref_name }}
+      CIRCLE_PROJECT_REPONAME: ${{ github.event.repository.name }}
+      CIRCLE_SHA1: ${{ github.sha }}
+      CIRCLE_WORKFLOW_JOB_ID: ${{ github.job }}-${{ github.run_id }}-${{ github.run_attempt
+        }}
+      ARTIFACTORY_USER_PLATFORM: ${{ secrets.ARTIFACTORY_USER_PLATFORM }}
+      ARTIFACTORY_TOKEN_PLATFORM: ${{ secrets.ARTIFACTORY_TOKEN_PLATFORM }}
+      DOCKERHUB_AUTH_TOKEN: ${{ secrets.DOCKERHUB_AUTH_TOKEN }}
+      SA_RELEASE_BOT_GITHUB_PEM: ${{ secrets.SA_RELEASE_BOT_GITHUB_PEM }}
+      SA_RELEASE_BOT_APP_ID: ${{ secrets.SA_RELEASE_BOT_APP_ID }}
+    needs:
+    - test
+    if: startsWith(github.ref, 'refs/tags/v')
+    steps:
+    - uses: actions/checkout@v3
+      with:
+        fetch-depth: 0
+        fetch-tags: true
+    - uses: actions/setup-go@v4
+      with:
+        go-version: '1.17'
+    - name: Install build tools
+      run: sudo apt-get update && sudo apt-get install -y build-essential
+    - name: Build binary
+      run: make build
+    - name: Install goreleaser
+      run: make install-goreleaser
+    - name: Generate GitHub token and run release
+      run: |
+        export GITHUB_TOKEN=$(./bin/token-generator -pem-key=${SA_RELEASE_BOT_GITHUB_PEM} -org-name=SuperAwesomeLTD -app-id=${SA_RELEASE_BOT_APP_ID})
+        make release
+  release-dry-run:
+    runs-on: ubuntu-latest
+    env:
+      CIRCLE_BRANCH: ${{ github.ref_name }}
+      CIRCLE_PROJECT_REPONAME: ${{ github.event.repository.name }}
+      CIRCLE_SHA1: ${{ github.sha }}
+      CIRCLE_WORKFLOW_JOB_ID: ${{ github.job }}-${{ github.run_id }}-${{ github.run_attempt
+        }}
+    needs:
+    - test-dry-run
+    if: '!startsWith(github.ref, ''refs/tags/'')'
+    steps:
+    - uses: actions/checkout@v3
+      with:
+        fetch-depth: 0
+        fetch-tags: true
+    - uses: actions/setup-go@v4
+      with:
+        go-version: '1.17'
+    - name: Install build tools
+      run: sudo apt-get update && sudo apt-get install -y build-essential
+    - name: Build binary
+      run: make build
+    - name: Install goreleaser
+      run: make install-goreleaser
+    - name: Run release dry-run
+      run: make release-dryrun
