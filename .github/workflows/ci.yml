@@ -8,19 +8,11 @@ name: CI Pipeline
 jobs:
   cancel:
     name: Cancel Previous Runs
-    runs-on:
-    - self-hosted
-    - Linux
-    - X64
-    - production
+    runs-on: ubuntu-latest
     steps:
     - uses: SuperAwesomeLTD/github-actions-templates/.github/actions/cancel-workflows@main
   test:
-    runs-on:
-    - self-hosted
-    - Linux
-    - X64
-    - production
+    runs-on: ubuntu-latest
     env:
       CIRCLE_BRANCH: ${{ github.ref_name }}
       CIRCLE_PROJECT_REPONAME: ${{ github.event.repository.name }}
@@ -47,11 +39,7 @@ jobs:
         make generate-test-data
         make test
   test-dry-run:
-    runs-on:
-    - self-hosted
-    - Linux
-    - X64
-    - production
+    runs-on: ubuntu-latest
     env:
       CIRCLE_BRANCH: ${{ github.ref_name }}
       CIRCLE_PROJECT_REPONAME: ${{ github.event.repository.name }}
@@ -74,11 +62,7 @@ jobs:
         make generate-test-data
         make test
   release:
-    runs-on:
-    - self-hosted
-    - Linux
-    - X64
-    - production
+    runs-on: ubuntu-latest
     env:
       CIRCLE_BRANCH: ${{ github.ref_name }}
       CIRCLE_PROJECT_REPONAME: ${{ github.event.repository.name }}
@@ -112,11 +96,7 @@ jobs:
         export GITHUB_TOKEN=$(./bin/token-generator -pem-key=${SA_RELEASE_BOT_GITHUB_PEM} -org-name=SuperAwesomeLTD -app-id=${SA_RELEASE_BOT_APP_ID})
         make release
   release-dry-run:
-    runs-on:
-    - self-hosted
-    - Linux
-    - X64
-    - production
+    runs-on: ubuntu-latest
     env:
       CIRCLE_BRANCH: ${{ github.ref_name }}
       CIRCLE_PROJECT_REPONAME: ${{ github.event.repository.name }}
