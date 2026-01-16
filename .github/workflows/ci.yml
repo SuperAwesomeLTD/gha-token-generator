@@ -38,6 +38,8 @@ jobs:
     - uses: actions/setup-go@v4
       with:
         go-version: '1.17'
+    - name: Install build tools
+      run: sudo apt-get update && sudo apt-get install -y build-essential
     - name: Run
       run: |
         make generate-test-data
@@ -62,6 +64,8 @@ jobs:
     - uses: actions/setup-go@v4
       with:
         go-version: '1.17'
+    - name: Install build tools
+      run: sudo apt-get update && sudo apt-get install -y build-essential
     - name: Run
       run: |
         make generate-test-data
@@ -94,6 +98,8 @@ jobs:
     - uses: actions/setup-go@v4
       with:
         go-version: '1.17'
+    - name: Install build tools
+      run: sudo apt-get update && sudo apt-get install -y build-essential
     - name: Run
       run: make build
   release-dry-run:
@@ -118,5 +124,7 @@ jobs:
     - uses: actions/setup-go@v4
       with:
         go-version: '1.17'
+    - name: Install build tools
+      run: sudo apt-get update && sudo apt-get install -y build-essential
     - name: Run
       run: make build
